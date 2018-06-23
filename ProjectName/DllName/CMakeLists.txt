@@ -1,0 +1,1 @@
+add_library(DllName SHARED DllSample.h DllSample.cpp) #Add a .dll library

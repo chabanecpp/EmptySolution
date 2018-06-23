@@ -1,1 +1,1 @@
-add_library(LibName blabla.h blabla.cpp) #Add a .lib project
+add_library(LibName STATIC LibSample.h LibSample.cpp) #Add a .lib library
