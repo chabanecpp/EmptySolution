@@ -1,0 +1,1 @@
+add_library(LibName blabla.h blabla.cpp) #Add a .lib project
