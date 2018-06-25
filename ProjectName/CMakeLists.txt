@@ -9,8 +9,10 @@ add_subdirectory (LibName) #call top level CMakeLists.txt
 include_directories("${PROJECT_SOURCE_DIR}/DllName") #include dll directory
 add_subdirectory (DllName) #call top level CMakeLists.txt
 
-#Add an executable 
-add_executable(ExeName main.cpp) #add a .exe project
+#Add an executable
+file(GLOB src *.h *.cpp) # generate a list of all files that match the globbing expressions into src variable
+
+add_executable(ExeName ${src}) #add a .exe project
 
 target_link_libraries(ExeName LibName) #LibName static lib is linked into ExeName
 
