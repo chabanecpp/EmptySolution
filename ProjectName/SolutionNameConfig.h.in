@@ -1,0 +1,3 @@
+// the configured options and settings for SolutionName
+#define SolutionName_VERSION_MAJOR @SolutionName_VERSION_MAJOR@
+#define SolutionName_VERSION_MAJOR @SolutionName_VERSION_MAJOR@
