@@ -11,6 +11,9 @@ configure_file(
 	"${PROJECT_BINARY_DIR}/SolutionNameConfig.h"
 	)
 
+#Set executable solution path 
+set(buildDir ${PROJECT_SOURCE_DIR}/build)
+set(EXECUTABLE_OUTPUT_PATH ${buildDir}) #Set output dir
 
 #Add a static library
 include_directories ("${PROJECT_SOURCE_DIR}/LibName") #include lib directory
@@ -33,4 +36,4 @@ target_link_libraries(ExeName LibName) #LibName static lib is linked into ExeNam
 
 target_link_libraries(ExeName LoadTimeDllName) #LoadTimeDllName dynamic lib is linked into ExeName
 
-target_link_libraries(ExeName RunTimeDllName) #RunTimeDllName dynamic lib is linked into ExeName
+#target_link_libraries(ExeName RunTimeDllName) #RunTimeDllName dynamic lib is linked into ExeName
