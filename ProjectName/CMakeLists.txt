@@ -11,9 +11,8 @@ configure_file(
 	"${PROJECT_BINARY_DIR}/SolutionNameConfig.h"
 	)
 
-#Set executable solution path 
-set(buildDir ${PROJECT_SOURCE_DIR}/build)
-set(EXECUTABLE_OUTPUT_PATH ${buildDir}) #Set output dir
+#Set binary output path
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build") #Set output dir
 
 #Add a static library
 include_directories ("${PROJECT_SOURCE_DIR}/LibName") #include lib directory
