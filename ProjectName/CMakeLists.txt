@@ -12,8 +12,8 @@ configure_file(
 	)
 
 #Set executable solution path 
-set(buildDir ${PROJECT_SOURCE_DIR}/build)
-set(EXECUTABLE_OUTPUT_PATH ${buildDir}) #Set output dir
+#set(buildDir ${PROJECT_SOURCE_DIR}/build) TODO : set artefacts directory for the solution
+set(EXECUTABLE_OUTPUT_PATH build) #Set output dir
 
 #Add a static library
 include_directories ("${PROJECT_SOURCE_DIR}/LibName") #include lib directory
