@@ -11,8 +11,14 @@ configure_file(
 	"${PROJECT_BINARY_DIR}/SolutionNameConfig.h"
 	)
 
+<<<<<<< HEAD
+#Set executable solution path 
+#set(buildDir ${PROJECT_SOURCE_DIR}/build) TODO : set artefacts directory for the solution
+set(EXECUTABLE_OUTPUT_PATH build) #Set output dir
+=======
 #Set binary output path
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build") #Set output dir
+>>>>>>> 9100499d9b2456580dd2cc4fee430f915ad59aa3
 
 #Add a static library
 include_directories ("${PROJECT_SOURCE_DIR}/LibName") #include lib directory
