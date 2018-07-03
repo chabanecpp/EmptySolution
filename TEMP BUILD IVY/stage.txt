@@ -1,0 +1,6 @@
+Bonjour 2.0.4.0
+#Boost 1.48.0
+Boost 1.55.0
+ipp 7.0.205
+protobuf 2.5.0
+wxWidgets 2.8.11-12

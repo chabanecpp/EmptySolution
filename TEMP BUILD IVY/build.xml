@@ -1,0 +1,313 @@
+<project name="AcquisitionStub" default="build-binaries" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<ivy:configure url="http://git-server/ivysettings.xml"/>
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+
+	<!--  common properties  -->
+	<property name="srv.src.root" location="./"/>
+	<property name="srv.build.root" location="../build"/>
+	<property name="srv.tool.makensis" location="${srv.src.root}/nsis/makensis.exe"/>
+	<property name="srv.install.dir" value="${srv.build.root}/install"/>
+	<property name="srv.ivy.dir" value="${srv.build.root}/ivy-repository"/>
+	<property name="srv.dependency.dir" value="${srv.ivy.dir}/dependencies"/>
+	<property name="srv.artifact.dir" value="${srv.ivy.dir}/artifacts"/>
+	
+	<property name="local.src.root" location="./"/>
+	<property name="local.build.root" location="../../build/${ant.project.name}"/>
+	<property name="bin.debug.subdir" value="Trophy/bin/Debug"/>
+	<property name="bin.release.subdir" value="Trophy/bin/Release"/>
+	
+	<!-- compilation achitecture dependent properties -->
+	<target name="init-properties" >
+
+		<if><equals arg1="${compiler}" arg2="VS2005_32"/><then>
+			<property name="cmake.compiler" value="Visual Studio 8 2005"/>
+			<property name="srv.build.dir" value="${srv.build.root}/VS2005/win32"/>
+			<property name="local.build.dir" value="${local.build.root}/VS2005/win32"/>
+			<property name="architecture" value="ARCHI32"/>
+			<property name="VSVersion" value="VS2005"/>
+			</then>
+		<elseif><equals arg1="${compiler}" arg2="VS2013_64"/><then>
+			<property name="cmake.compiler" value="Visual Studio 12 2013 Win64"/>
+			<property name="srv.build.dir" value="${srv.build.root}/VS2013/win64"/>
+			<property name="local.build.dir" value="${local.build.root}/VS2013/win64"/>
+			<property name="architecture" value="ARCHI64"/>
+			<property name="VSVersion" value="VS2013"/>
+			</then></elseif>
+		<elseif><equals arg1="${compiler}" arg2="VS2005_64"/><then>
+			<property name="cmake.compiler" value="Visual Studio 8 2005 Win64"/>
+			<property name="srv.build.dir" value="${srv.build.root}/VS2005/win64"/>
+			<property name="local.build.dir" value="${local.build.root}/VS2005/win64"/>
+			<property name="architecture" value="ARCHI64"/>
+			<property name="VSVersion" value="VS2005"/>
+			</then></elseif>
+		<else> <!-- <elseif><equals arg1="${compiler}" arg2="VS2013_32"/><then> -->
+			<property name="cmake.compiler" value="Visual Studio 12 2013"/>
+			<property name="srv.build.dir" value="${srv.build.root}/VS2013/win32"/>
+			<property name="local.build.dir" value="${local.build.root}/VS2013/win32"/>
+			<property name="architecture" value="ARCHI32"/>
+			<property name="VSVersion" value="VS2013"/>
+			</else>
+		</if>
+		
+		<property name="srv.bin.debug.dir" value="${srv.build.dir}/${bin.debug.subdir}"/>
+		<property name="srv.bin.release.dir" value="${srv.build.dir}/${bin.release.subdir}"/>
+		<property name="local.bin.debug.dir" value="${local.build.dir}/${bin.debug.subdir}"/>
+		<property name="local.bin.release.dir" value="${local.build.dir}/${bin.release.subdir}"/>
+		<property name="local.dependency.dir" value="${local.build.dir}/ivy-repository"/>
+		
+		<echo message="-- compilation ${architecture} bit using ${cmake.compiler}"/>
+		
+		<if><istrue value="${nodebug}"/><then>
+			<echo message="-- compilation debug skipped"/>
+		</then></if>
+		
+		<if><istrue value="${norelease}"/><then>
+			<echo message="-- compilation release skipped"/>
+		</then></if>
+		
+		<if><not><isset property="signtool"/></not><then>
+			<property name="signtool" value="binary_signature/signtool.bat"/>
+		</then></if>
+		
+		<echo message="-- signature tool is ${signtool}"/>
+	</target>
+	
+	
+	<!--Configure, generate and build with CMake-->
+	<macrodef name="srv_cmakebuild">
+		<attribute name="srcdir"/>
+		<attribute name="builddir"/>
+		<attribute name="generator"/>
+		<!-- <element name="args" optional="yes"/> -->
+		
+		<sequential>
+			<delete dir="@{builddir}" failonerror="false"/> 
+			<mkdir dir="@{builddir}"/> 
+
+			<exec executable="cmake" dir="@{builddir}">
+				<arg value="@{srcdir}"/>
+				<arg value="-G"/>
+				<arg value="@{generator}"/>
+			</exec>
+			
+			<if><isfalse value="${nodebug}"/><then>
+				<exec executable="cmake" dir="@{builddir}">
+					<arg value="--build"/>
+					<arg value="."/>
+					<arg value="--config"/>
+					<arg value="Debug"/>
+				</exec>
+			</then></if>
+
+			<if><isfalse value="${norelease}"/><then>
+				<exec executable="cmake" dir="@{builddir}">
+					<arg value="--build"/>
+					<arg value="."/>
+					<arg value="--config"/>
+					<arg value="Release"/>
+				</exec>
+			</then></if>
+			
+		</sequential>
+	</macrodef>
+
+	<!--  build Visual Studio Solution (Jenkins)   -->
+	<target name="build-binaries" description="-- build the binaries" depends="init-properties">
+ 		<srv_cmakebuild srcdir="${srv.src.root}" builddir="${srv.build.dir}" generator="${cmake.compiler}" />
+	</target>
+
+	<!--###############################
+	       Make installer
+	############################### -->
+	<target name="make-installers" description="make the installers" depends="init-properties,get-git-tag">
+		
+		<mkdir  dir="${srv.install.dir}"/>
+		<signbinaries bindir="${srv.bin.release.dir}"/>
+		
+		<sequential>
+
+			<!-- Copy Dependencies   -->
+			<!-- <copy todir="${srv.install.dir}"> -->
+				<!-- <fileset dir="${srv.dependency.dir}"/> -->
+			<!-- </copy> -->
+
+			<!-- copy nsis installer script and AcqImagesFile.dll props and info.xml of AcqImgFiles2 -->
+			<copy file="${srv.src.root}/${ant.project.name}/install/${ant.project.name}.nsi" todir="${srv.install.dir}" />
+			<copy file="${srv.src.root}/${ant.project.name}/AcquisitionStub/src/errorpage.html" todir="${srv.install.dir}" />
+			<copy file="${srv.src.root}/${ant.project.name}/AcquisitionStub/src/info.xml" todir="${srv.install.dir}" />
+
+			<!-- Generate installer ".exe"   -->
+			<exec executable="${srv.tool.makensis}"  failonerror="true">
+				<arg value="-DVERSION=${git.tag}"/>
+				<arg value="-DVSVERSION=${VSVersion}"/>
+				<arg value="-D${architecture}=1"/>
+				
+				<!-- <arg value="-DRELEASE_DIR_32=${srv.build.root}/${VSVersion}/win32/${bin.release.subdir}"/>  -->
+				<arg value="-DRELEASE_DIR_64=${srv.build.root}/${VSVersion}/win64/${bin.release.subdir}"/>
+				<arg value="-DSOURCE_DIR=${srv.src.root}"/>
+				<arg value="-DOUTPUT_DIR=${srv.install.dir}/"/>
+				<arg value="${srv.install.dir}/${ant.project.name}.nsi"/> 
+			</exec>
+
+		</sequential>
+
+		<signbinaries bindir="${srv.install.dir}"/>
+	</target>
+	
+   
+<!--###############################
+    All Target
+	Build, compile (32 or 64), and make installer (local or jenkins)
+	Project tree are builded here : 
+		-> AcqImages.git\..\build\win(32|64)\
+	#################################### -->		
+	<target name="all-clean">
+		<delete dir="${srv.artifact.dir}" failonerror="false"/>
+		<delete dir="${srv.install.dir}" failonerror="false"/>
+	</target>
+	
+	<target name="build"  depends="init-properties,build-binaries,retrieve-dependencies,sign-binaries" /> 
+	<target name="build-test" depends="init-properties,build-binaries,retrieve-dependencies,run-unitests,sign-binaries"/>
+			
+	<target name="all-prepublish" depends="init-properties,ivy-prepublish"/>
+	<target name="all-publish" depends="init-properties,ivy-publish"/>
+	
+	<target name="build-clean">
+		<delete dir="${local.build.dir}" failonerror="false"/> 
+	</target>
+	
+<!--####################################
+	Build (32 or 64) solution on Local host.
+	Project tree are builded here : 
+		-> <projectname>\..\..\build\<projectname>\win(32|64)\
+	#################################### -->
+	<target name="local-build" description="-- build local project" depends="init-properties,map-ivy-repository">
+	
+		<sequential>
+
+			<mkdir dir="${local.build.dir}"/> 
+			<exec executable="cmake" dir="${local.build.dir}">
+				<arg value="${local.src.root}"/>
+				<arg value="-G"/>
+				<arg value="${cmake.compiler}"/>
+			</exec>
+			
+			<ivyretrieve dependencydir="${local.dependency.dir}" reportdir="${local.dependency.dir}" />
+
+		</sequential>
+		
+	</target>
+
+
+	<!--###############################
+	        Sign Binaries
+	############################### -->
+	<macrodef name="signbinaries">
+		<attribute name="bindir"/>
+		<sequential>
+			<for param="file">
+				<path>
+					<fileset dir="@{bindir}">
+						<include name="*.exe"/>
+						<include name="*.dll"/>
+					</fileset>
+				</path>
+				<sequential>
+					<exec executable="${signtool}">
+						<arg value="@{file}"/>
+					</exec>
+				</sequential>
+			</for>
+		</sequential>
+	</macrodef>	
+	
+	<target name="sign-binaries" description="-- sign the binaries" depends="init-properties">
+		<signbinaries bindir="${srv.bin.release.dir}"/>
+	</target>
+
+	<!--###############################
+	       Unitests 
+	############################### -->
+	<target name="run-unitests" depends="init-properties">
+		<!-- <installimages fromdir="${srv.dependency.dir}" todir="${srv.bin.release.dir}" /> -->
+		<!-- <exec executable="ctest" dir="${srv.build.dir}"> -->
+			<!-- <arg value="-C"/> -->
+			<!-- <arg value="Release"/> -->
+		<!-- </exec> -->
+		<echo message="unitest not yet implemented"/>
+	</target>
+
+	<!--###############################
+	       map-ivy-repository
+	############################### -->
+	<target name="map-ivy-repository" description="-- map the ivy repository">
+	
+		<!-- For local publish 
+		\\marwp1003\Ivy-repository XXX /USER:svc0042@corp.carestreamhealth.com 
+	    <property name="shared.default.root" value="\\marwp1003\Ivy-repository"/>
+		<property name="user.default"               value="svc0042"/>
+	    <property name="dotted.domain.name.default" value="corp.carestreamhealth.com"/>
+		-->
+	   
+	    <property name="user.parameter" value="/USER:${user.default}@${dotted.domain.name.default}"/>
+		<echo message="net use ${shared.default.root} XXX ${user.parameter}"/>
+		<exec executable="net" failifexecutionfails="false">
+			<arg value="use"/>
+			<arg value="${shared.default.root}"/>
+			<arg value="${password.default}"/>
+			<arg value="${user.parameter}"/>
+		</exec>
+
+		<exec executable="net" failifexecutionfails="false">
+			<arg value="use"/>
+		</exec>
+	</target>
+
+	<!--###############################
+	     Retrieve Dependencies
+	############################### -->
+	<macrodef name="ivyretrieve">
+		<attribute name="dependencydir"/>
+		<attribute name="reportdir"/>
+		<sequential>
+			<delete dir="@{dependencydir}" failonerror="false" />
+			<ivy:resolve />
+			<ivy:retrieve pattern="@{dependencydir}/[artifact].[ext]"/>
+			<ivy:report todir="@{reportdir}" graph="false" />
+		</sequential>
+	</macrodef>	 
+	
+	<macrodef name="installwebview">
+		<attribute name="fromdir"/>
+		<attribute name="todir"/>
+		<sequential>
+			<delete dir="@{todir}/WebView" failonerror="false" />		
+			<mkdir dir="@{todir}/WebView"/> 
+			<unzip src="@{fromdir}/Nagoya_WebView.zip" dest="@{todir}/WebView" />
+		</sequential>
+	</macrodef>
+	
+	<target name="retrieve-dependencies" depends="init-properties,map-ivy-repository" description="-- retrieve the dependencies from the Ivy repository">
+		<ivyretrieve dependencydir="${srv.dependency.dir}" reportdir="${srv.build.dir}/Release/" />
+	</target>
+	
+	
+	<!--###############################
+	           Get Git Tag 
+	############################### -->
+	<target name="get-git-tag" description="-- get the current git tag">
+		<exec executable="git" dir="${srv.src.root}" outputproperty="git.tag">
+			<arg value="describe"/>
+			<arg value="--dirty"/>
+		</exec>
+		<echo message="The current git tag is ${git.tag}."/>
+	</target>
+
+</project>
+
+
+
+
+
+
+
