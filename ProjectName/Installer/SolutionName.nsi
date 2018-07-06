@@ -1,5 +1,7 @@
 SetCompressor /FINAL lzma #Set compression algorithm (lzma in this case); /FINAL : to ignore subsequent setCompressor
 
+!include "Registery.nsh" #Script for registry instructions 
+
 ;Global constants
 !define COMPANY_NAME "Company name"
 !define APP_NAME "Solution name"
