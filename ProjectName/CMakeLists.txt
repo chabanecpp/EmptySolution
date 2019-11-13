@@ -40,3 +40,14 @@ target_link_libraries(ExeName LibName) #LibName static lib is linked into ExeNam
 target_link_libraries(ExeName LoadTimeDllName) #LoadTimeDllName dynamic lib is linked into ExeName
 
 #target_link_libraries(ExeName RunTimeDllName) #RunTimeDllName dynamic lib is linked into ExeName
+	
+set(Boost_INCLUDE_DIR Stage/boost_1_71_0)
+set(Boost_LIBRARY_DIR Stage/boost_1_71_0/stage/lib)
+
+find_package(boost)
+
+if(Boost_FOUND)
+	include_directories(${Boost_INCLUDE_DIR})
+	link_directories(${Boost_LIBRARY_DIR})
+	target_link_libraries( ExeName ${Boost_LIBRARIES} )
+endif()
